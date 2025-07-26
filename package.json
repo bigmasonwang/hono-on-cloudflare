@@ -6,16 +6,24 @@
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "test": "vitest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "lint-staged",
+    "db:generate": "prisma generate",
+    "db:migrate": "npx wrangler d1 execute todo-db --file=migrations/0001_create_todos.sql",
+    "db:migrate:remote": "npx wrangler d1 execute todo-db --remote --file=migrations/0001_create_todos.sql"
   },
   "dependencies": {
     "hono": "^4.8.9"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.57",
+    "@prisma/adapter-d1": "^6.12.0",
+    "@prisma/client": "^6.12.0",
+    "@types/node": "^24.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "3.6.2",
+    "prisma": "^6.12.0",
     "vitest": "^3.2.4",
     "wrangler": "^4.4.0"
   },

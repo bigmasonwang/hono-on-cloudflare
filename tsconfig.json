@@ -7,6 +7,12 @@
     "skipLibCheck": true,
     "lib": ["ESNext"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
-  }
+    "jsxImportSource": "hono/jsx",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@cloudflare",
+      "./src/types"
+    ]
+  },
+  "include": ["src/**/*", "worker-configuration.d.ts", "vitest.config.ts"]
 }
