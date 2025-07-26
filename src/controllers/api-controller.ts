@@ -18,6 +18,9 @@ const apiController = new Hono<Contexts>()
     c.set('prisma', prisma)
     await next()
   })
+  .get('/', (c) => {
+    return c.text('ok')
+  })
   .route('/todos', todoController)
 
 export default apiController
