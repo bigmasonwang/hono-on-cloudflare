@@ -11,8 +11,13 @@
     "typeRoots": [
       "./node_modules/@types",
       "./node_modules/@cloudflare",
-      "./src/types"
+      "./test"
     ]
   },
-  "include": ["src/**/*", "worker-configuration.d.ts", "vitest.config.ts"]
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "worker-configuration.d.ts",
+    "vitest.config.ts"
+  ]
 }

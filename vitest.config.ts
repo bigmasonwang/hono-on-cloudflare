@@ -21,7 +21,7 @@ export default defineWorkersConfig(async () => {
           },
         },
       },
-      setupFiles: ['./src/test-setup.ts'],
+      setupFiles: ['./test/test-setup.ts'],
     },
   }
 })
