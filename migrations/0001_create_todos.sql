@@ -1,0 +1,16 @@
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "Todo" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "title" TEXT NOT NULL,
+    "completed" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create trigger to update the updatedAt timestamp
+CREATE TRIGGER IF NOT EXISTS update_todo_updated_at
+AFTER UPDATE ON "Todo"
+FOR EACH ROW
+BEGIN
+    UPDATE "Todo" SET "updatedAt" = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;

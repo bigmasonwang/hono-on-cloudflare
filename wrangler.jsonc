@@ -3,9 +3,7 @@
   "name": "hono-on-cloudflare",
   "main": "src/index.ts",
   "compatibility_date": "2025-07-26",
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_flags": ["nodejs_compat"],
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
@@ -21,13 +19,13 @@
   //     "bucket_name": "my-bucket"
   //   }
   // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DATABASE",
+      "database_name": "todo-db",
+      "database_id": "1fe12615-b529-4e88-abb7-e17995cd92d9",
+    },
+  ],
   // "ai": {
   //   "binding": "AI"
   // },
