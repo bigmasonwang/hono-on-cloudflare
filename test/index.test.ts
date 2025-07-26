@@ -20,9 +20,9 @@ describe('Todo API', () => {
     await prisma.todo.deleteMany({})
   })
 
-  describe('GET /todos', () => {
+  describe('GET /api/todos', () => {
     it('should return an empty array when no todos exist', async () => {
-      const response = await app.request('/todos', {}, env)
+      const response = await app.request('/api/todos', {}, env)
       expect(response.status).toBe(200)
       const todos = (await response.json()) as any[]
       expect(todos).toEqual([])
@@ -36,7 +36,7 @@ describe('Todo API', () => {
       await prisma.todo.create({ data: { title: 'Test Todo 1' } })
       await prisma.todo.create({ data: { title: 'Test Todo 2' } })
 
-      const response = await app.request('/todos', {}, env)
+      const response = await app.request('/api/todos', {}, env)
       expect(response.status).toBe(200)
       const todos = (await response.json()) as any[]
       expect(todos).toHaveLength(2)
@@ -45,10 +45,10 @@ describe('Todo API', () => {
     })
   })
 
-  describe('POST /todos', () => {
+  describe('POST /api/todos', () => {
     it('should create a new todo', async () => {
       const response = await app.request(
-        '/todos',
+        '/api/todos',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -66,7 +66,7 @@ describe('Todo API', () => {
 
     it('should return 400 when title is missing', async () => {
       const response = await app.request(
-        '/todos',
+        '/api/todos',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -81,13 +81,13 @@ describe('Todo API', () => {
     })
   })
 
-  describe('GET /todos/:id', () => {
+  describe('GET /api/todos/:id', () => {
     it('should return a specific todo', async () => {
       const adapter = new PrismaD1(env.DATABASE)
       const prisma = new PrismaClient({ adapter })
       const created = await prisma.todo.create({ data: { title: 'Test Todo' } })
 
-      const response = await app.request(`/todos/${created.id}`, {}, env)
+      const response = await app.request(`/api/todos/${created.id}`, {}, env)
       expect(response.status).toBe(200)
       const todo = (await response.json()) as any
       expect(todo.id).toBe(created.id)
@@ -95,14 +95,14 @@ describe('Todo API', () => {
     })
 
     it('should return 404 when todo not found', async () => {
-      const response = await app.request('/todos/999', {}, env)
+      const response = await app.request('/api/todos/999', {}, env)
       expect(response.status).toBe(404)
       const error = (await response.json()) as any
       expect(error.error).toBe('Todo not found')
     })
   })
 
-  describe('PUT /todos/:id', () => {
+  describe('PUT /api/todos/:id', () => {
     it('should update a todo', async () => {
       const adapter = new PrismaD1(env.DATABASE)
       const prisma = new PrismaClient({ adapter })
@@ -111,7 +111,7 @@ describe('Todo API', () => {
       })
 
       const response = await app.request(
-        `/todos/${created.id}`,
+        `/api/todos/${created.id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -134,7 +134,7 @@ describe('Todo API', () => {
       })
 
       const response = await app.request(
-        `/todos/${created.id}`,
+        `/api/todos/${created.id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -150,14 +150,14 @@ describe('Todo API', () => {
     })
   })
 
-  describe('DELETE /todos/:id', () => {
+  describe('DELETE /api/todos/:id', () => {
     it('should delete a todo', async () => {
       const adapter = new PrismaD1(env.DATABASE)
       const prisma = new PrismaClient({ adapter })
       const created = await prisma.todo.create({ data: { title: 'To Delete' } })
 
       const response = await app.request(
-        `/todos/${created.id}`,
+        `/api/todos/${created.id}`,
         {
           method: 'DELETE',
         },

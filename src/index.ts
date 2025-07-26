@@ -1,17 +1,28 @@
 import { Hono } from 'hono'
-import { PrismaClient } from '../src/generated/prisma'
+import { PrismaClient } from './generated/prisma'
 import { PrismaD1 } from '@prisma/adapter-d1'
 
-const app = new Hono<{ Bindings: CloudflareBindings }>()
+type Variables = {
+  prisma: PrismaClient
+}
+
+const app = new Hono<{ Bindings: CloudflareBindings; Variables: Variables }>()
+
+// Prisma middleware - only for API routes
+app.use('/api/*', async (c, next) => {
+  const adapter = new PrismaD1(c.env.DATABASE)
+  const prisma = new PrismaClient({ adapter })
+  c.set('prisma', prisma)
+  await next()
+})
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
 // Get all todos
-app.get('/todos', async (c) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
+app.get('/api/todos', async (c) => {
+  const prisma = c.get('prisma')
 
   try {
     const todos = await prisma.todo.findMany({
@@ -24,9 +35,8 @@ app.get('/todos', async (c) => {
 })
 
 // Create a new todo
-app.post('/todos', async (c) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
+app.post('/api/todos', async (c) => {
+  const prisma = c.get('prisma')
 
   try {
     const { title } = await c.req.json()
@@ -45,9 +55,8 @@ app.post('/todos', async (c) => {
 })
 
 // Get a single todo
-app.get('/todos/:id', async (c) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
+app.get('/api/todos/:id', async (c) => {
+  const prisma = c.get('prisma')
 
   try {
     const id = parseInt(c.req.param('id'))
@@ -66,9 +75,8 @@ app.get('/todos/:id', async (c) => {
 })
 
 // Update a todo
-app.put('/todos/:id', async (c) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
+app.put('/api/todos/:id', async (c) => {
+  const prisma = c.get('prisma')
 
   try {
     const id = parseInt(c.req.param('id'))
@@ -89,9 +97,8 @@ app.put('/todos/:id', async (c) => {
 })
 
 // Delete a todo
-app.delete('/todos/:id', async (c) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
+app.delete('/api/todos/:id', async (c) => {
+  const prisma = c.get('prisma')
 
   try {
     const id = parseInt(c.req.param('id'))
