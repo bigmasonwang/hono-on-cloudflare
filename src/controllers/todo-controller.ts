@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { type Contexts } from './api-controller'
+import { type Contexts } from '@/controllers/api-controller'
 
 const todoController = new Hono<Contexts>()
   .get('/', async (c) => {

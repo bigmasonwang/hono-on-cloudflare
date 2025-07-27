@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { PrismaClient } from '../generated/prisma'
-import todoController from './todo-controller'
+import { PrismaClient } from '@/generated/prisma'
+import todoController from '@/controllers/todo-controller'
 import { PrismaD1 } from '@prisma/adapter-d1'
 
 type Variables = {

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
-import apiController from './controllers/api-controller'
+import apiController from '@/controllers/api-controller'
 
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 
