@@ -10,7 +10,10 @@
     "lint": "lint-staged",
     "postinstall": "prisma generate",
     "db:migrate:local": "wrangler d1 migrations apply DATABASE --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DATABASE --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply DATABASE --remote",
+    "build:types": "tsc --noEmit --skipLibCheck",
+    "type-check": "tsc --noEmit",
+    "build": "tsc --build"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.2",
