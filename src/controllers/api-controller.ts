@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { PrismaClient } from '@/generated/prisma'
 import todoController from '@/controllers/todo-controller'
-import { PrismaD1 } from '@prisma/adapter-d1'
+import { createClient } from '@/lib/db'
 
 type Variables = {
   prisma: PrismaClient
@@ -13,8 +13,7 @@ type Contexts = {
 
 const apiController = new Hono<Contexts>()
   .use('*', async (c, next) => {
-    const adapter = new PrismaD1(c.env.DATABASE)
-    const prisma = new PrismaClient({ adapter })
+    const prisma = createClient(c.env)
     c.set('prisma', prisma)
     await next()
   })
