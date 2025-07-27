@@ -23,5 +23,10 @@ export default defineWorkersConfig(async () => {
       },
       setupFiles: ['./test/test-setup.ts'],
     },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
   }
 })

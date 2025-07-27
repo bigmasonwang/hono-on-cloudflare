@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { env } from 'cloudflare:test'
-import app from '../../src/index'
-import { PrismaClient } from '../../src/generated/prisma'
+import app from '@/index'
+import { PrismaClient } from '@/generated/prisma'
 import { PrismaD1 } from '@prisma/adapter-d1'
 
 describe('Hello Hono root route', () => {
