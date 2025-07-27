@@ -8,11 +8,7 @@
     "lib": ["ESNext"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/@cloudflare",
-      "./test"
-    ]
+    "typeRoots": ["./node_modules/@types", "./node_modules/@cloudflare"]
   },
   "include": [
     "src/**/*",
