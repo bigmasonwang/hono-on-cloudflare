@@ -7,9 +7,15 @@ settings:
 importers:
   .:
     dependencies:
+      '@hono/zod-validator':
+        specifier: ^0.7.2
+        version: 0.7.2(hono@4.8.9)(zod@4.0.10)
       hono:
         specifier: ^4.8.9
         version: 4.8.9
+      zod:
+        specifier: ^4.0.10
+        version: 4.0.10
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.8.57
@@ -369,6 +375,15 @@ packages:
     engines: { node: '>=18' }
     cpu: [x64]
     os: [win32]
+
+  '@hono/zod-validator@0.7.2':
+    resolution:
+      {
+        integrity: sha512-ub5eL/NeZ4eLZawu78JpW/J+dugDAYhwqUIdp9KYScI6PZECij4Hx4UsrthlEUutqDDhPwRI0MscUfNkvn/mqQ==,
+      }
+    peerDependencies:
+      hono: '>=3.9.0'
+      zod: ^3.25.0 || ^4.0.0
 
   '@img/sharp-darwin-arm64@0.33.5':
     resolution:
@@ -1800,6 +1815,12 @@ packages:
         integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==,
       }
 
+  zod@4.0.10:
+    resolution:
+      {
+        integrity: sha512-3vB+UU3/VmLL2lvwcY/4RV2i9z/YU0DTV/tDuYjrwmx5WeJ7hwy+rGEEx8glHp6Yxw7ibRbKSaIFBgReRPe5KA==,
+      }
+
 snapshots:
   '@cloudflare/kv-asset-handler@0.4.0':
     dependencies:
@@ -1931,6 +1952,11 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.4':
     optional: true
+
+  '@hono/zod-validator@0.7.2(hono@4.8.9)(zod@4.0.10)':
+    dependencies:
+      hono: 4.8.9
+      zod: 4.0.10
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
@@ -2734,3 +2760,5 @@ snapshots:
       youch-core: 0.3.3
 
   zod@3.22.3: {}
+
+  zod@4.0.10: {}

@@ -4,7 +4,7 @@ import apiController from '@/controllers/api-controller'
 
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 
-app
+const routes = app
   .use(logger())
   .get('/', (c) => {
     return c.text('Hello Hono!')
@@ -12,3 +12,4 @@ app
   .route('/api', apiController)
 
 export default app
+export type AppType = typeof routes

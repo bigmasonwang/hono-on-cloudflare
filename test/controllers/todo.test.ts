@@ -77,7 +77,9 @@ describe('Todo API', () => {
 
       expect(response.status).toBe(400)
       const error = (await response.json()) as any
-      expect(error.error).toBe('Title is required')
+      // Zod validator returns validation errors in success: false, error format
+      expect(error.success).toBe(false)
+      expect(error.error).toBeDefined()
     })
   })
 
