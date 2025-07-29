@@ -83,6 +83,24 @@ The api-controller uses Hono context variables to inject Prisma:
 })
 ```
 
+**Auth Type Extraction:**
+To avoid circular dependencies with Better Auth, types are extracted in `src/lib/auth-types.ts`:
+
+```typescript
+// Create a dummy auth instance for type inference
+declare const dummyPrisma: PrismaClient
+const authTypeHelper = betterAuth({
+  database: prismaAdapter(dummyPrisma, { provider: 'sqlite' }),
+  emailAndPassword: { enabled: true },
+})
+
+// Export the types
+export type AuthUser = typeof authTypeHelper.$Infer.Session.user
+export type AuthSession = typeof authTypeHelper.$Infer.Session.session
+```
+
+These types are then used throughout the app for type-safe auth handling.
+
 **Request Validation:**
 Controllers use `zValidator` with Zod schemas for type-safe request validation with automatic error responses.
 
@@ -102,9 +120,38 @@ The app uses typed Cloudflare bindings (`CloudflareBindings`) - generate types w
 
 **Database Schema Changes:**
 
-1. Modify `prisma/schema.prisma`
-2. Generate migration: `npx prisma migrate dev --name description`
-3. Run `pnpm postinstall` to regenerate Prisma client
+This app uses Wrangler for D1 migrations instead of Prisma Migrate. Follow these steps:
+
+1. Modify `prisma/schema.prisma` with your schema changes
+2. Generate migration SQL using Prisma's diff tool:
+
+   ```bash
+   # For initial migration from empty database
+   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script --output migrations/XXXX_description.sql
+
+   # For subsequent migrations (comparing against current D1 database)
+   npx prisma migrate diff --from-local-d1 --to-schema-datamodel prisma/schema.prisma --script --output migrations/XXXX_description.sql
+   ```
+
+3. Or manually create a migration file:
+   ```bash
+   wrangler d1 migrations create DATABASE migration_name
+   ```
+4. Review and edit the generated SQL if needed (especially for data migrations)
+5. Apply migrations:
+   ```bash
+   pnpm run db:migrate:local   # Apply to local D1 database
+   pnpm run db:migrate:remote  # Apply to remote D1 database
+   ```
+6. Regenerate Prisma client: `pnpm postinstall`
+
+**Important Migration Considerations:**
+
+- D1 doesn't support transactions, so migrations should be carefully tested
+- When adding NOT NULL columns to existing tables, ensure you handle existing data
+- The `migrations/` directory contains raw SQL files executed by Wrangler
+- Migration files are numbered sequentially (0001, 0002, etc.)
+- Always test migrations locally before applying to remote database
 
 **Adding New Routes:**
 

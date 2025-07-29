@@ -6,9 +6,11 @@ import { type Contexts } from '@/controllers/api-controller'
 const todoController = new Hono<Contexts>()
   .get('/', async (c) => {
     const prisma = c.get('prisma')
+    const user = c.get('user')
 
     try {
       const todos = await prisma.todo.findMany({
+        where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
       })
       return c.json(todos)
@@ -26,12 +28,13 @@ const todoController = new Hono<Contexts>()
     ),
     async (c) => {
       const prisma = c.get('prisma')
+      const user = c.get('user')
 
       try {
         const { title } = c.req.valid('json')
 
         const todo = await prisma.todo.create({
-          data: { title },
+          data: { title, userId: user.id },
         })
         return c.json(todo, 201)
       } catch (error) {
@@ -41,11 +44,12 @@ const todoController = new Hono<Contexts>()
   )
   .get('/:id', async (c) => {
     const prisma = c.get('prisma')
+    const user = c.get('user')
 
     try {
       const id = parseInt(c.req.param('id'))
       const todo = await prisma.todo.findUnique({
-        where: { id },
+        where: { id, userId: user.id },
       })
 
       if (!todo) {
@@ -68,13 +72,17 @@ const todoController = new Hono<Contexts>()
     ),
     async (c) => {
       const prisma = c.get('prisma')
+      const user = c.get('user')
 
       try {
         const id = parseInt(c.req.param('id'))
         const { title, completed } = c.req.valid('json')
 
         const todo = await prisma.todo.update({
-          where: { id },
+          where: {
+            id,
+            userId: user.id,
+          },
           data: {
             ...(title !== undefined && { title }),
             ...(completed !== undefined && { completed }),
@@ -83,22 +91,27 @@ const todoController = new Hono<Contexts>()
 
         return c.json(todo)
       } catch (error) {
-        return c.json({ error: 'Failed to update todo' }, 500)
+        return c.json({ error: 'Todo not found' }, 404)
       }
     }
   )
   .delete('/:id', async (c) => {
     const prisma = c.get('prisma')
+    const user = c.get('user')
 
     try {
       const id = parseInt(c.req.param('id'))
+
       await prisma.todo.delete({
-        where: { id },
+        where: {
+          id,
+          userId: user.id,
+        },
       })
 
       return c.json({ message: 'Todo deleted successfully' })
     } catch (error) {
-      return c.json({ error: 'Failed to delete todo' }, 500)
+      return c.json({ error: 'Todo not found' }, 404)
     }
   })
 
