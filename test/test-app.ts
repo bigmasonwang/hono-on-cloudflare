@@ -1,7 +1,7 @@
-import { Hono } from 'hono'
-import { createApiController } from '@/factories/api-controller-factory'
 import { createClient } from '@/lib/db'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
+import { factory } from '@/factories/app-factory'
+import todos from '@/routes/todos'
 
 // Test helper to create mock auth middleware
 const createMockAuthMiddleware = (authUser: AuthUser | null) => {
@@ -42,20 +42,13 @@ const createTestPrismaSetup = () => {
 }
 
 // Create a test version of the API controller using the factory
-export const createTestApiController = (authUser: AuthUser | null) => {
-  return createApiController({
-    authMiddleware: createMockAuthMiddleware(authUser),
-    prismaSetup: createTestPrismaSetup(),
-  })
-}
 
 export const createTestApp = (authUser: AuthUser | null = null) => {
-  const app = new Hono<{
-    Bindings: CloudflareBindings
-  }>()
-
-  const testApiController = createTestApiController(authUser)
-  app.route('/api', testApiController)
+  const app = factory
+    .createApp()
+    .use('/api/*', createMockAuthMiddleware(authUser))
+    .use('/api/*', createTestPrismaSetup())
+    .route('/api/todos', todos)
 
   return app
 }

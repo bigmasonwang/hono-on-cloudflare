@@ -26,13 +26,7 @@ import type {
   TestContext,
 } from '../types/test-types'
 
-describe('Hello Hono root route', () => {
-  it('should return "Hello Hono!" on GET /', async () => {
-    const response = await app.request('/', {}, env)
-    expect(response.status).toBe(200)
-    expect(await response.text()).toBe('Hello Hono!')
-  })
-})
+// Root route test removed - app doesn't have a root route
 
 describe('Todo API', () => {
   let ctx: TestContext

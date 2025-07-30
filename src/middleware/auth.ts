@@ -1,12 +1,17 @@
 import type { Context, Next } from 'hono'
 import { createAuth } from '@/lib/auth'
-import type { Contexts } from '@/factories/api-controller-factory'
+import type { Contexts } from '@/factories/app-factory'
 
 /**
  * Auth middleware that validates user session using Better Auth
  * Adds user and session to context if authenticated
  */
 export const authMiddleware = async (c: Context<Contexts>, next: Next) => {
+  // Skip auth check for auth routes
+  if (c.req.path.startsWith('/api/auth/')) {
+    return next()
+  }
+
   const session = await createAuth(c.env).api.getSession({
     headers: c.req.raw.headers,
   })

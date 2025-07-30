@@ -6,7 +6,11 @@
     "prettier.config.js",
     "vite.config.js"
   ],
-
+  "references": [
+    {
+      "path": "../tsconfig.json"
+    }
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

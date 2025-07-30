@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
-import { type Contexts } from '@/controllers/api-controller'
+import { type Contexts } from '@/factories/app-factory'
 
-const todoController = new Hono<Contexts>()
+const todos = new Hono<Contexts>()
   .get('/', async (c) => {
     const prisma = c.get('prisma')
     const user = c.get('user')
@@ -115,4 +115,4 @@ const todoController = new Hono<Contexts>()
     }
   })
 
-export default todoController
+export default todos
