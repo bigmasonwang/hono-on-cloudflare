@@ -10,13 +10,12 @@
     "test": "vitest --run",
     "prepare": "husky",
     "lint": "lint-staged",
-    "postinstall": "prisma generate && pnpm run build:frontend",
+    "postinstall": "prisma generate && pnpm run build:backend && pnpm run build:frontend",
     "db:migrate:local": "wrangler d1 migrations apply DATABASE --local",
     "db:migrate:remote": "wrangler d1 migrations apply DATABASE --remote",
     "build:types": "tsc --noEmit --skipLibCheck",
     "type-check": "tsc --noEmit",
-    "build:backend": "tsc --build",
-    "build": "pnpm run build:backend && pnpm run build:frontend"
+    "build:backend": "tsc --build"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.2",
