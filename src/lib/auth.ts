@@ -13,6 +13,9 @@ export const createAuth = (env: CloudflareBindings) => {
     emailAndPassword: {
       enabled: true,
     },
+    ...(env.ENVIRONMENT === 'development' && {
+      trustedOrigins: ['http://localhost:3000'],
+    }),
   })
 }
 

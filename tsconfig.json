@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "composite": true,
     "strict": true,
     "skipLibCheck": true,
     "lib": ["ESNext"],
@@ -12,7 +13,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "outDir": "./dist",
+    "declarationDir": "./dist"
   },
   "include": [
     "src/**/*",

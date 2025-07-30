@@ -1,24 +1,13 @@
-import { Hono } from 'hono'
-import { logger } from 'hono/logger'
-import apiController from '@/controllers/api-controller'
 import { createAuth } from './lib/auth'
-import type { AuthUser, AuthSession } from './lib/auth-types'
+import todos from './routes/todos'
 
-const app = new Hono<{
-  Bindings: CloudflareBindings
-  Variables: { user: AuthUser | null; session: AuthSession | null }
-}>()
+import { factoryWithMiddleware } from './factories/app-factory'
 
-const routes = app
-  .use(logger())
-  .get('/', (c) => {
-    return c.text('Hello Hono!')
-  })
-  .route('/api', apiController)
+const app = factoryWithMiddleware.createApp().route('/api/todos', todos)
 
 app.on(['GET', 'POST'], '/api/*', (c) => {
   return createAuth(c.env).handler(c.req.raw)
 })
 
 export default app
-export type AppType = typeof routes
+export type AppType = typeof app
