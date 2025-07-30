@@ -1,5 +1,6 @@
 import { createFactory } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
+import { logger } from 'hono/logger'
 import { PrismaClient } from '@/generated/prisma'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
 import { prismaMiddleware } from '@/middleware/prisma'
@@ -20,6 +21,7 @@ export const factory = createFactory<Contexts>()
 
 export const factoryWithMiddleware = createFactory<Contexts>({
   initApp: (app) => {
+    app.use(logger())
     // Global error handler
     app.onError((err, c) => {
       // Enhanced logging with request context
@@ -48,7 +50,8 @@ export const factoryWithMiddleware = createFactory<Contexts>({
       )
     })
 
-    app.use('/api/*', prismaMiddleware).use('/api/*', authMiddleware)
+    app.use('/api/*', prismaMiddleware)
+    app.use('/api/*', authMiddleware)
   },
 })
 
