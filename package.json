@@ -15,7 +15,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply DATABASE --remote",
     "build:types": "tsc --noEmit --skipLibCheck",
     "type-check": "tsc --noEmit",
-    "build": "tsc --build"
+    "build:backend": "tsc --build",
+    "build": "pnpm run build:backend && pnpm run build:frontend"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.2",
