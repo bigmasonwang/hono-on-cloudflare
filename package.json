@@ -1,10 +1,6 @@
 {
   "name": "hono-on-cloudflare",
   "type": "module",
-  "workspaces": [
-    ".",
-    "frontend"
-  ],
   "scripts": {
     "dev:frontend": "cd frontend && pnpm run dev",
     "dev:api": "wrangler dev",
