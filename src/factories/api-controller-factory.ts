@@ -3,7 +3,7 @@ import { PrismaClient } from '@/generated/prisma'
 import todoController from '@/controllers/todo-controller'
 import { createClient } from '@/lib/db'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
-import { createAuth } from '@/lib/auth'
+import { authMiddleware } from '@/middleware/auth'
 
 type Variables = {
   prisma: PrismaClient
@@ -36,27 +36,14 @@ export function createApiController(options: ApiControllerOptions = {}) {
         await next()
       }
     })
-    .use('*', async (c, next) => {
-      if (options.authMiddleware) {
-        return options.authMiddleware(c, next)
-      }
 
-      // Default production auth middleware
-      const session = await createAuth(c.env).api.getSession({
-        headers: c.req.raw.headers,
-      })
-
-      if (!session || !session.user) {
-        return c.json({ error: 'Authentication required' }, 401)
-      }
-
-      c.set('user', session.user)
-      c.set('session', session.session)
-      return next()
-    })
-    .get('/', (c) => {
+    // Public routes (no auth required)
+    .get('/health', (c) => {
       return c.text('ok')
     })
+
+    // Protected routes (auth required)
+    .use('/todos/*', options.authMiddleware || authMiddleware)
     .route('/todos', todoController)
 
   return apiController
