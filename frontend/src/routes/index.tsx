@@ -1,18 +1,21 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/')({
   component: App,
 })
 
 function App() {
-  const callApi = () => {
-    fetch('/api/health')
-      .then((res) => res.text())
-      .then((data) => console.log(data))
-  }
+  const { data } = authClient.useSession()
+
   return (
     <div className="text-center">
-      <button onClick={callApi}>Click me</button>
+      <h1>Home</h1>
+      {data?.user ? (
+        <p>Hello, {data.user.name}</p>
+      ) : (
+        <p>You are not signed in</p>
+      )}
     </div>
   )
 }
