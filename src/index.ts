@@ -5,7 +5,7 @@ import { factoryWithMiddleware } from './factories/app-factory'
 
 const app = factoryWithMiddleware.createApp().route('/api/todos', todos)
 
-app.on(['GET', 'POST'], '/api/auth/*', (c) => {
+app.on(['GET', 'POST'], '/api/*', (c) => {
   return createAuth(c.env).handler(c.req.raw)
 })
 
