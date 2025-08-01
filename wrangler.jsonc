@@ -13,9 +13,10 @@
     "run_worker_first": ["/api/*"],
   },
 
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
+  "vars": {
+    // Add your OpenAI API key here or use wrangler secret put OPENAI_API_KEY
+    "OPENAI_API_KEY": "",
+  },
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
