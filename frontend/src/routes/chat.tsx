@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { Button } from '@/components/ui/button'
@@ -6,15 +6,38 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Send, Bot, User } from 'lucide-react'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/chat')({
   component: ChatPage,
 })
 
 function ChatPage() {
+  const { data: session, isPending } = authClient.useSession()
   const [input, setInput] = useState('')
   const { messages, sendMessage, status } = useChat()
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+
+  // Redirect to login if not authenticated
+  if (!isPending && !session?.user) {
+    return <Navigate to="/login" />
+  }
+
+  // Show loading state while checking authentication
+  if (isPending) {
+    return (
+      <div className="container mx-auto max-w-4xl p-4">
+        <Card className="h-[80vh] flex flex-col">
+          <CardContent className="flex-1 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Loading...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -42,6 +65,9 @@ function ChatPage() {
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
             AI Chat Assistant
+            <span className="text-sm font-normal text-muted-foreground ml-auto">
+              Welcome, {session?.user?.email}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden p-0">
