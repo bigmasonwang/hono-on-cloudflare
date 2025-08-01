@@ -5,6 +5,7 @@ import { PrismaClient } from '@/generated/prisma'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
 import { prismaMiddleware } from '@/middleware/prisma'
 import { authMiddleware } from '@/middleware/auth'
+import { sentry } from '@hono/sentry'
 
 type Variables = {
   prisma: PrismaClient
@@ -22,6 +23,7 @@ export const factory = createFactory<Contexts>()
 export const factoryWithMiddleware = createFactory<Contexts>({
   initApp: (app) => {
     app.use(logger())
+    app.use(sentry())
     // Global error handler
     app.onError((err, c) => {
       // Enhanced logging with request context
