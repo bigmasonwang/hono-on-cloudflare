@@ -14,6 +14,7 @@ export default function Header() {
       <nav className="flex flex-row">
         <div className="px-2 font-bold space-x-2">
           <Link to="/">Home</Link>
+          {!isPending && session?.user && <Link to="/chat">Chat</Link>}
           {!isPending && (
             <>
               {session?.user ? (
