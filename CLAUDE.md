@@ -166,3 +166,59 @@ import { hcWithType } from '@/client'
 const client = hcWithType('http://localhost:8787/')
 const todos = await client.api.todos.$get()
 ```
+
+## AI Chat Integration
+
+### Overview
+
+The application includes an AI-powered chat feature using:
+
+- **AI SDK v5**: Unified AI integration with streaming support
+- **OpenAI**: GPT-3.5-turbo model for chat completions
+- **Streaming UI**: Real-time message streaming with loading states
+
+### Setup
+
+1. **Configure OpenAI API Key:**
+
+   ```bash
+   # For local development, add to wrangler.jsonc vars section
+   # For production, use Wrangler secrets
+   wrangler secret put OPENAI_API_KEY
+   ```
+
+2. **Chat Route Structure:**
+   - Backend: `src/routes/chat.ts` - Handles AI streaming with `toUIMessageStreamResponse()`
+   - Frontend: `frontend/src/routes/chat.tsx` - Protected route with authentication
+   - Component: `frontend/src/components/ChatContent.tsx` - Reusable chat UI
+
+### Key Implementation Details
+
+**Backend Chat Endpoint:**
+
+- Uses `streamText` from AI SDK for streaming responses
+- Converts UI messages to core messages with `convertToCoreMessages()`
+- Returns streaming response with `toUIMessageStreamResponse()`
+
+**Frontend Chat Hook:**
+
+- Uses `useChat` from `@ai-sdk/react`
+- Manual input state management (v5 requirement)
+- Status-based loading indicators:
+  - `submitted`: Show loading dots
+  - `streaming`: Show AI response
+  - `ready`: Enable input
+
+**Authentication Protection:**
+
+- Chat route requires authentication
+- Redirects to login if not authenticated
+- Shows personalized greeting with user email
+
+### Chat UI Features
+
+- Auto-scrolling to latest messages
+- Loading animation during AI response wait
+- Disabled input during message processing
+- Responsive design with shadcn/ui components
+- Avatar indicators for user/assistant messages
