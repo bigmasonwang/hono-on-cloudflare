@@ -37,7 +37,7 @@ export function ChatContent({ session }: ChatContentProps) {
     }
   }
 
-  const isLoading = status === 'streaming'
+  const isLoading = status === 'submitted'
 
   return (
     <div className="container mx-auto max-w-4xl p-4">
@@ -100,24 +100,22 @@ export function ChatContent({ session }: ChatContentProps) {
                   )}
                 </div>
               ))}
-              {isLoading &&
-                messages.length > 0 &&
-                messages[messages.length - 1]?.role === 'user' && (
-                  <div className="flex gap-3 justify-start">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-muted rounded-lg px-3 py-2">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                      </div>
+              {isLoading && (
+                <div className="flex gap-3 justify-start">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      <Bot className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg px-3 py-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                      <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
             </div>
           </div>
           <form onSubmit={handleSubmit} className="flex gap-2 px-6 pb-4">
@@ -125,10 +123,17 @@ export function ChatContent({ session }: ChatContentProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..."
-              disabled={isLoading}
+              disabled={status === 'submitted' || status === 'streaming'}
               className="flex-1"
             />
-            <Button type="submit" disabled={isLoading || !input.trim()}>
+            <Button
+              type="submit"
+              disabled={
+                status === 'submitted' ||
+                status === 'streaming' ||
+                !input.trim()
+              }
+            >
               <Send className="h-4 w-4" />
               <span className="sr-only">Send message</span>
             </Button>
