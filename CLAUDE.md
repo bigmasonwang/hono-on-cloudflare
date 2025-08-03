@@ -46,7 +46,7 @@ pnpm run deploy                # Deploy to Cloudflare Workers with minification
 ### Framework Stack
 
 - **Hono**: Web framework optimized for Cloudflare Workers
-- **Prisma**: ORM with D1 adapter for Cloudflare D1 (SQLite) database
+- **Kysely**: Type-safe SQL query builder with D1 dialect for Cloudflare D1 (SQLite) database
 - **Zod**: Schema validation with Hono validator integration
 - **TypeScript**: Strict typing with path aliases (`@/*` → `src/*`)
 
@@ -55,13 +55,14 @@ pnpm run deploy                # Deploy to Cloudflare Workers with minification
 **Layered Controller Architecture:**
 
 - `src/index.ts` - Main app with typed routes export (`AppType`)
-- `src/controllers/api-controller.ts` - API middleware layer with Prisma setup
-- `src/controllers/todo-controller.ts` - Feature-specific CRUD operations
+- `src/factories/app-factory.ts` - Factory for creating typed Hono app instances
+- `src/routes/todos.ts` - Feature-specific CRUD operations
 
 **Database Layer:**
 
-- Prisma generates client to `src/generated/prisma/` (custom output path)
-- PrismaD1 adapter integrates with Cloudflare D1 SQLite database
+- Kysely with D1 dialect for type-safe SQL query building
+- Database types defined in `src/lib/database-types.ts`
+- Kysely client initialization in `src/lib/kysely.ts`
 - Migrations in `migrations/` directory
 
 **Type-Safe RPC Client:**
@@ -72,34 +73,33 @@ pnpm run deploy                # Deploy to Cloudflare Workers with minification
 ### Key Patterns
 
 **Dependency Injection:**
-The api-controller uses Hono context variables to inject Prisma:
+The application uses Hono context variables to inject Kysely database client:
 
 ```typescript
-.use('*', async (c, next) => {
-  const adapter = new PrismaD1(c.env.DATABASE)
-  const prisma = new PrismaClient({ adapter })
-  c.set('prisma', prisma)
-  await next()
-})
+// src/middleware/kysely.ts
+export const kyselyMiddleware = async (c: Context<Contexts>, next: Next) => {
+  const db = createKyselyClient(c.env.DATABASE)
+  c.set('db', db)
+  return next()
+}
 ```
 
-**Auth Type Extraction:**
-To avoid circular dependencies with Better Auth, types are extracted in `src/lib/auth-types.ts`:
+**Auth Integration:**
+Better Auth is configured with Kysely in `src/lib/auth.ts`:
 
 ```typescript
-// Create a dummy auth instance for type inference
-declare const dummyPrisma: PrismaClient
-const authTypeHelper = betterAuth({
-  database: prismaAdapter(dummyPrisma, { provider: 'sqlite' }),
-  emailAndPassword: { enabled: true },
-})
+export const createAuth = (env: CloudflareBindings) => {
+  const db = createKyselyClient(env.DATABASE)
 
-// Export the types
-export type AuthUser = typeof authTypeHelper.$Infer.Session.user
-export type AuthSession = typeof authTypeHelper.$Infer.Session.session
+  return betterAuth({
+    secret: env.BETTER_AUTH_SECRET,
+    database: { db },
+    emailAndPassword: { enabled: true },
+  })
+}
 ```
 
-These types are then used throughout the app for type-safe auth handling.
+Auth types are extracted in `src/lib/auth-types.ts` for type-safe auth handling throughout the application.
 
 **Request Validation:**
 Controllers use `zValidator` with Zod schemas for type-safe request validation with automatic error responses.
@@ -120,30 +120,32 @@ The app uses typed Cloudflare bindings (`CloudflareBindings`) - generate types w
 
 **Database Schema Changes:**
 
-This app uses Wrangler for D1 migrations instead of Prisma Migrate. Follow these steps:
+This app uses Wrangler for D1 migrations. Follow these steps:
 
-1. Modify `prisma/schema.prisma` with your schema changes
-2. Generate migration SQL using Prisma's diff tool:
-
-   ```bash
-   # For initial migration from empty database
-   npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script --output migrations/XXXX_description.sql
-
-   # For subsequent migrations (comparing against current D1 database)
-   npx prisma migrate diff --from-local-d1 --to-schema-datamodel prisma/schema.prisma --script --output migrations/XXXX_description.sql
-   ```
-
-3. Or manually create a migration file:
+1. Update type definitions in `src/lib/database-types.ts` to match your desired schema
+2. Create a migration file:
    ```bash
    wrangler d1 migrations create DATABASE migration_name
    ```
-4. Review and edit the generated SQL if needed (especially for data migrations)
-5. Apply migrations:
+3. Write your SQL migration in the generated file in `migrations/` directory
+4. Apply migrations:
    ```bash
    pnpm run db:migrate:local   # Apply to local D1 database
    pnpm run db:migrate:remote  # Apply to remote D1 database
    ```
-6. Regenerate Prisma client: `pnpm postinstall`
+5. The Kysely types in `database-types.ts` provide compile-time type safety
+
+**Database Type Helpers:**
+
+Kysely provides type helpers for working with database operations:
+
+```typescript
+import type { Todo, NewTodo, TodoUpdate } from '@/lib/database-types'
+
+// Selectable<TodoTable> - for reading data
+// Insertable<TodoTable> - for inserting data
+// Updateable<TodoTable> - for updating data
+```
 
 **Important Migration Considerations:**
 
@@ -155,9 +157,10 @@ This app uses Wrangler for D1 migrations instead of Prisma Migrate. Follow these
 
 **Adding New Routes:**
 
-1. Create controller in `src/controllers/`
-2. Import and mount in `api-controller.ts` or `index.ts`
-3. Type safety maintained through `AppType` export
+1. Create route file in `src/routes/`
+2. Import and mount in your app factory or main index file
+3. Use the typed context `Contexts` from `app-factory.ts` for type safety
+4. Access the Kysely client with `c.get('db')`
 
 **RPC Client Usage:**
 
