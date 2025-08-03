@@ -10,7 +10,7 @@
     "test": "vitest --run",
     "prepare": "husky",
     "lint": "lint-staged",
-    "predeploy": "pnpm run build:backend && pnpm run build:frontend",
+    "postinstall": "pnpm run build:backend && pnpm run build:frontend",
     "db:migrate:local": "wrangler d1 migrations apply DATABASE --local",
     "db:migrate:remote": "wrangler d1 migrations apply DATABASE --remote",
     "build:types": "tsc --noEmit --skipLibCheck",
