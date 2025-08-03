@@ -1,4 +1,6 @@
-import type { Todo, User } from '@/generated/prisma'
+import type { Todo, User } from '@/lib/database-types'
+import type { AuthUser } from '@/lib/auth-types'
+import type { KyselyClient } from '@/lib/kysely'
 
 // Response types for your API
 export interface TodoResponse extends Todo {}
@@ -27,9 +29,5 @@ export interface DeleteResponse {
 export interface TestContext {
   user: User
   authUser: AuthUser
-  prisma: PrismaClient
+  db: KyselyClient
 }
-
-// Import necessary types
-import type { AuthUser } from '@/lib/auth-types'
-import type { PrismaClient } from '@/generated/prisma'

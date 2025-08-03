@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
-import { PrismaClient, User, Todo } from '@/generated/prisma'
-import { PrismaD1 } from '@prisma/adapter-d1'
+import { createKyselyClient, type KyselyClient } from '@/lib/kysely'
+import type { User, Todo } from '@/lib/database-types'
 import { env } from 'cloudflare:test'
 import type { AuthUser } from '@/lib/auth-types'
 import { type Hono } from 'hono'
@@ -11,31 +11,35 @@ export const testUserFactory = {
     name: 'Test User',
     email: `test-${Date.now()}@example.com`,
     emailVerified: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     image: null,
     ...overrides,
   }),
 
   create: async (
-    prisma: PrismaClient,
+    db: KyselyClient,
     overrides: Partial<User> = {}
   ): Promise<User> => {
-    return await prisma.user.create({
-      data: {
-        id: overrides.id || `test-user-${Date.now()}`,
-        ...testUserFactory.build(overrides),
-      },
-    })
+    const userData = {
+      id: overrides.id || `test-user-${Date.now()}`,
+      ...testUserFactory.build(overrides),
+    }
+
+    return await db
+      .insertInto('user')
+      .values(userData)
+      .returningAll()
+      .executeTakeFirstOrThrow()
   },
 
   createAuthUser: (user: User): AuthUser => ({
     id: user.id,
     email: user.email,
-    emailVerified: user.emailVerified,
+    emailVerified: Boolean(user.emailVerified),
     name: user.name,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    createdAt: new Date(user.createdAt),
+    updatedAt: new Date(user.updatedAt),
     image: user.image,
   }),
 }
@@ -45,32 +49,42 @@ export const testTodoFactory = {
     title: 'Test Todo',
     completed: false,
     userId: 'test-user',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     ...overrides,
   }),
 
   create: async (
-    prisma: PrismaClient,
+    db: KyselyClient,
     userId: string,
     overrides: Partial<Todo> = {}
   ): Promise<Todo> => {
-    return await prisma.todo.create({
-      data: {
-        ...testTodoFactory.build({ userId, ...overrides }),
-      },
-    })
+    const todoData = {
+      ...testTodoFactory.build({ userId, ...overrides }),
+    }
+
+    const result = await db
+      .insertInto('Todo')
+      .values(todoData)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    // Normalize boolean for consistency
+    return {
+      ...result,
+      completed: Boolean(result.completed),
+    }
   },
 
   createMany: async (
-    prisma: PrismaClient,
+    db: KyselyClient,
     userId: string,
     count: number,
     overrides: Partial<Todo> = {}
   ): Promise<Todo[]> => {
     const todos: Todo[] = []
     for (let i = 0; i < count; i++) {
-      const todo = await testTodoFactory.create(prisma, userId, {
+      const todo = await testTodoFactory.create(db, userId, {
         title: `Test Todo ${i + 1}`,
         ...overrides,
       })
@@ -82,15 +96,16 @@ export const testTodoFactory = {
 
 // Database setup and cleanup utilities
 export const setupTestDatabase = () => {
-  const adapter = new PrismaD1(env.DATABASE)
-  return new PrismaClient({ adapter })
+  return createKyselyClient(env.DATABASE)
 }
 
-export const cleanupDatabase = async (prisma: PrismaClient) => {
+export const cleanupDatabase = async (db: KyselyClient) => {
   // Order matters due to foreign key constraints
-  await prisma.todo.deleteMany({})
-  await prisma.session.deleteMany({})
-  await prisma.user.deleteMany({})
+  await db.deleteFrom('Todo').execute()
+  await db.deleteFrom('session').execute()
+  await db.deleteFrom('account').execute()
+  await db.deleteFrom('verification').execute()
+  await db.deleteFrom('user').execute()
 }
 
 // Request helper utilities

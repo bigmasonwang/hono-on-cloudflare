@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/db'
+import { createKyselyClient } from '@/lib/kysely'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
 import { factory } from '@/factories/app-factory'
 import todos from '@/routes/todos'
@@ -26,18 +26,12 @@ const createMockAuthMiddleware = (authUser: AuthUser | null) => {
   }
 }
 
-// Test helper to create Prisma setup with proper cleanup
-const createTestPrismaSetup = () => {
+// Test helper to create Kysely setup
+const createTestKyselySetup = () => {
   return async (c: any, next: any) => {
-    const prisma = createClient(c.env)
-    c.set('prisma', prisma)
-
-    try {
-      await next()
-    } finally {
-      // Ensure cleanup after each request
-      await prisma.$disconnect()
-    }
+    const db = createKyselyClient(c.env.DATABASE)
+    c.set('db', db)
+    return next()
   }
 }
 
@@ -47,7 +41,7 @@ export const createTestApp = (authUser: AuthUser | null = null) => {
   const app = factory
     .createApp()
     .use('/api/*', createMockAuthMiddleware(authUser))
-    .use('/api/*', createTestPrismaSetup())
+    .use('/api/*', createTestKyselySetup())
     .route('/api/todos', todos)
 
   return app

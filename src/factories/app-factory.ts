@@ -1,13 +1,13 @@
 import { createFactory } from 'hono/factory'
 import { HTTPException } from 'hono/http-exception'
 import { logger } from 'hono/logger'
-import { PrismaClient } from '@/generated/prisma'
+import type { KyselyClient } from '@/lib/kysely'
 import type { AuthUser, AuthSession } from '@/lib/auth-types'
-import { prismaMiddleware } from '@/middleware/prisma'
+import { kyselyMiddleware } from '@/middleware/kysely'
 import { authMiddleware } from '@/middleware/auth'
 
 type Variables = {
-  prisma: PrismaClient
+  db: KyselyClient
   user: AuthUser
   session: AuthSession
 }
@@ -50,7 +50,7 @@ export const factoryWithMiddleware = createFactory<Contexts>({
       )
     })
 
-    app.use('/api/*', prismaMiddleware)
+    app.use('/api/*', kyselyMiddleware)
     app.use('/api/*', authMiddleware)
   },
 })

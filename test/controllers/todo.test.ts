@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { env } from 'cloudflare:test'
-import { PrismaClient, User } from '@/generated/prisma'
+import type { User } from '@/lib/database-types'
 import type { AuthUser } from '@/lib/auth-types'
 import { createTestApp } from '../test-app'
 import app from '@/index'
@@ -33,20 +33,19 @@ describe('Todo API', () => {
 
   beforeEach(async () => {
     // Initialize test context
-    const prisma = setupTestDatabase()
-    await cleanupDatabase(prisma)
+    const db = setupTestDatabase()
+    await cleanupDatabase(db)
 
-    const user = await testUserFactory.create(prisma)
+    const user = await testUserFactory.create(db)
     const authUser = testUserFactory.createAuthUser(user)
 
-    ctx = { user, authUser, prisma }
+    ctx = { user, authUser, db }
   })
 
   afterEach(async () => {
     // Clean up after each test
-    if (ctx.prisma) {
-      await cleanupDatabase(ctx.prisma)
-      await ctx.prisma.$disconnect()
+    if (ctx.db) {
+      await cleanupDatabase(ctx.db)
     }
   })
 
@@ -82,13 +81,13 @@ describe('Todo API', () => {
 
     it('should return todos ordered by creation date (newest first)', async () => {
       // Create todos with slight time delay to ensure ordering
-      const todo1 = await testTodoFactory.create(ctx.prisma, ctx.user.id, {
+      const todo1 = await testTodoFactory.create(ctx.db, ctx.user.id, {
         title: 'First Todo',
-        createdAt: new Date('2024-01-01'),
+        createdAt: new Date('2024-01-01').toISOString(),
       })
-      const todo2 = await testTodoFactory.create(ctx.prisma, ctx.user.id, {
+      const todo2 = await testTodoFactory.create(ctx.db, ctx.user.id, {
         title: 'Second Todo',
-        createdAt: new Date('2024-01-02'),
+        createdAt: new Date('2024-01-02').toISOString(),
       })
 
       const testApp = createTestApp(ctx.authUser)
@@ -104,16 +103,16 @@ describe('Todo API', () => {
 
     it('should only return todos for the authenticated user', async () => {
       // Create another user with todos
-      const otherUser = await testUserFactory.create(ctx.prisma, {
+      const otherUser = await testUserFactory.create(ctx.db, {
         id: 'other-user',
         email: 'other@example.com',
       })
 
       // Create todos for both users
-      await testTodoFactory.create(ctx.prisma, ctx.user.id, {
+      await testTodoFactory.create(ctx.db, ctx.user.id, {
         title: 'My Todo',
       })
-      await testTodoFactory.create(ctx.prisma, otherUser.id, {
+      await testTodoFactory.create(ctx.db, otherUser.id, {
         title: 'Other Todo',
       })
 
@@ -154,9 +153,11 @@ describe('Todo API', () => {
       expect(todo.updatedAt).toBeDefined()
 
       // Verify it was actually created
-      const created = await ctx.prisma.todo.findUnique({
-        where: { id: todo.id },
-      })
+      const created = await ctx.db
+        .selectFrom('Todo')
+        .selectAll()
+        .where('id', '=', todo.id)
+        .executeTakeFirst()
       expect(created).toBeTruthy()
     })
 
@@ -194,7 +195,7 @@ describe('Todo API', () => {
 
   describe('GET /api/todos/:id', () => {
     it('should return a specific todo when authenticated as owner', async () => {
-      const todo = await testTodoFactory.create(ctx.prisma, ctx.user.id)
+      const todo = await testTodoFactory.create(ctx.db, ctx.user.id)
 
       const testApp = createTestApp(ctx.authUser)
       const response = await makeRequest(testApp, `/api/todos/${todo.id}`)
@@ -209,20 +210,20 @@ describe('Todo API', () => {
       })
     })
 
-    it('should return 500 for invalid todo ID', async () => {
+    it('should return 404 for invalid todo ID', async () => {
       const testApp = createTestApp(ctx.authUser)
       const response = await makeRequest(testApp, '/api/todos/non-existent-id')
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(404)
       const error = await parseJsonResponse<{ error: string }>(response)
-      expect(error.error).toBe('Failed to fetch todo')
+      expect(error.error).toBe('Todo not found')
     })
 
     it('should return 404 when todo belongs to another user', async () => {
-      const otherUser = await testUserFactory.create(ctx.prisma, {
+      const otherUser = await testUserFactory.create(ctx.db, {
         id: 'other-user',
         email: 'other@example.com',
       })
-      const todo = await testTodoFactory.create(ctx.prisma, otherUser.id)
+      const todo = await testTodoFactory.create(ctx.db, otherUser.id)
 
       const testApp = createTestApp(ctx.authUser)
       const response = await makeRequest(testApp, `/api/todos/${todo.id}`)
@@ -232,7 +233,7 @@ describe('Todo API', () => {
 
   describe('PUT /api/todos/:id', () => {
     it('should update todo fields', async () => {
-      const todo = await testTodoFactory.create(ctx.prisma, ctx.user.id, {
+      const todo = await testTodoFactory.create(ctx.db, ctx.user.id, {
         title: 'Original Title',
         completed: false,
       })
@@ -262,7 +263,7 @@ describe('Todo API', () => {
     })
 
     it('should allow partial updates', async () => {
-      const todo = await testTodoFactory.create(ctx.prisma, ctx.user.id, {
+      const todo = await testTodoFactory.create(ctx.db, ctx.user.id, {
         title: 'Original Title',
         completed: false,
       })
@@ -298,11 +299,11 @@ describe('Todo API', () => {
     })
 
     it("should return 404 when updating another user's todo", async () => {
-      const otherUser = await testUserFactory.create(ctx.prisma, {
+      const otherUser = await testUserFactory.create(ctx.db, {
         id: 'other-user',
         email: 'other@example.com',
       })
-      const todo = await testTodoFactory.create(ctx.prisma, otherUser.id)
+      const todo = await testTodoFactory.create(ctx.db, otherUser.id)
 
       const testApp = createTestApp(ctx.authUser)
 
@@ -316,16 +317,18 @@ describe('Todo API', () => {
       await expectNotFoundError(response)
 
       // Verify it wasn't changed
-      const unchanged = await ctx.prisma.todo.findUnique({
-        where: { id: todo.id },
-      })
+      const unchanged = await ctx.db
+        .selectFrom('Todo')
+        .selectAll()
+        .where('id', '=', todo.id)
+        .executeTakeFirst()
       expect(unchanged?.title).toBe(todo.title)
     })
   })
 
   describe('DELETE /api/todos/:id', () => {
     it('should delete a todo when authenticated as owner', async () => {
-      const todo = await testTodoFactory.create(ctx.prisma, ctx.user.id)
+      const todo = await testTodoFactory.create(ctx.db, ctx.user.id)
 
       const testApp = createTestApp(ctx.authUser)
       const response = await makeRequest(testApp, `/api/todos/${todo.id}`, {
@@ -337,10 +340,12 @@ describe('Todo API', () => {
       expect(result.message).toBe('Todo deleted successfully')
 
       // Verify it was deleted
-      const deleted = await ctx.prisma.todo.findUnique({
-        where: { id: todo.id },
-      })
-      expect(deleted).toBeNull()
+      const deleted = await ctx.db
+        .selectFrom('Todo')
+        .selectAll()
+        .where('id', '=', todo.id)
+        .executeTakeFirst()
+      expect(deleted).toBeUndefined()
     })
 
     it('should return 404 when deleting non-existent todo', async () => {
@@ -354,11 +359,11 @@ describe('Todo API', () => {
     })
 
     it("should return 404 when deleting another user's todo", async () => {
-      const otherUser = await testUserFactory.create(ctx.prisma, {
+      const otherUser = await testUserFactory.create(ctx.db, {
         id: 'other-user',
         email: 'other@example.com',
       })
-      const todo = await testTodoFactory.create(ctx.prisma, otherUser.id)
+      const todo = await testTodoFactory.create(ctx.db, otherUser.id)
 
       const testApp = createTestApp(ctx.authUser)
 
@@ -369,22 +374,12 @@ describe('Todo API', () => {
       await expectNotFoundError(response)
 
       // Verify it wasn't deleted
-      const stillExists = await ctx.prisma.todo.findUnique({
-        where: { id: todo.id },
-      })
-      expect(stillExists).not.toBeNull()
-    })
-  })
-
-  describe('Edge Cases and Error Handling', () => {
-    it('should handle database connection errors gracefully', async () => {
-      // This would require mocking Prisma to throw errors
-      // Skipping for now as it requires more complex setup
-    })
-
-    it('should handle concurrent updates correctly', async () => {
-      // This would test race conditions
-      // Requires more complex setup with parallel requests
+      const stillExists = await ctx.db
+        .selectFrom('Todo')
+        .selectAll()
+        .where('id', '=', todo.id)
+        .executeTakeFirst()
+      expect(stillExists).toBeDefined()
     })
   })
 })
