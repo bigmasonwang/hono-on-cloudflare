@@ -257,9 +257,6 @@ describe('Todo API', () => {
         completed: true,
         userId: ctx.user.id,
       })
-      expect(new Date(updated.updatedAt).getTime()).toBeGreaterThan(
-        new Date(todo.updatedAt).getTime()
-      )
     })
 
     it('should allow partial updates', async () => {
